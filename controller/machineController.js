@@ -11,48 +11,62 @@ const getMachines = async (req, res) => {
   }
 };
 
-// const createMachine = async (req, res) => {
-//   try {
-//     const newMachine = new Machine(req.body);
-//     await newMachine.save();
-//     res.status(201).json(newMachine);
-//   } catch (error) {
-//     res.status(400).json({ error: "Không thể tạo thiết bị" });
-//   }
-// };
-const createMachine = catchAsync(async (req, res) => {
+const createMachine = catchAsync(async (req, res, next) => {
   try {
-    const newMachine = new Machine(req.body);
+    const { machine_id, name, type, process_id, group_machine } = req.body;
+    const existingMachine = await Machine.findOne({ machine_id });
+
+    if (existingMachine) {
+      return next(new AppError("Machine ID đã tồn tại", 400));
+    }
+
+    const image = req.file ? req.file.buffer : undefined;
+    const newMachine = new Machine({
+      machine_id,
+      name,
+      type,
+      process_id,
+      group_machine,
+      image,
+    });
+
     await newMachine.save();
     res.status(201).json(newMachine);
   } catch (error) {
-    if (error.code === 11000) {
-      const err = new AppError("Machine ID đã tồn tại", 400);
-      return res.status(err.statusCode).json({
-        status: err.status,
-        message: err.message,
-      });
+    if (error.name === "ValidationError") {
+      const missingFields = Object.keys(error.errors).join(", ");
+      return next(new AppError(`Thiếu trường: ${missingFields}`, 400));
     }
-    res.status(500).json({ status: "error", message: "Lỗi không xác định" });
+    next(error);
   }
 });
 
 const updateMachine = async (req, res) => {
   try {
-    const updatedMachine = await Machine.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedMachine = await Machine.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     res.json(updatedMachine);
   } catch (error) {
     res.status(400).json({ error: "Không thể cập nhật thiết bị" });
   }
 };
 
-const deleteMachine = async (req, res) => {
+const deleteMachine = async (req, res, next) => {
   try {
-    await Machine.findByIdAndDelete(req.params.id);
+    const machine = await Machine.findById(req.params.id);
+    if (!machine) {
+      return next(new AppError("Không tìm thấy thiết bị", 404));
+    }
+
+    await machine.deleteOne();
     res.json({ message: "Đã xóa thiết bị" });
   } catch (error) {
-    res.status(400).json({ error: "Không thể xóa thiết bị" });
+    next(new AppError("Không thể xóa thiết bị", 400));
   }
 };
+
 
 module.exports = { getMachines, createMachine, updateMachine, deleteMachine };
