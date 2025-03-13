@@ -6,6 +6,7 @@ const WebSocket = require("ws");
 const mqttClient = require("./client/mqttClient");
 const catchAsync = require("./utils/catchAsync");
 const AppError = require("./utils/AppError");
+const globalErrorHandler = require("./controller/errorController");
 
 //Tạo Express
 const app = express();
@@ -38,22 +39,16 @@ mqttClient.on("message", (topic, message) => {
   }
 });
 
-app.use("/machines", machineRoutes);
-app.use("/users", userRoutes);
+app.use("/api/v1/machines", machineRoutes);
+app.use("/api/v1/users", userRoutes);
 
 app.use(
   "*",
   catchAsync(async (req, res, next) => {
-    throw new AppError("This is error");
+    throw new AppError(`Cant find ${req.originalUrl}on this server`,404);
   })
 );
 
-app.use((err, req, res, next) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    stack: err.stack,
-  });
-});
+app.use(globalErrorHandler);
 
 app.listen(3000, () => console.log("Express server running on port 3000"));

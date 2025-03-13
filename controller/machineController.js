@@ -1,4 +1,6 @@
 const Machine = require("../models/machine");
+const AppError = require("../utils/AppError");
+const catchAsync = require("../utils/catchAsync");
 
 const getMachines = async (req, res) => {
   try {
@@ -9,15 +11,31 @@ const getMachines = async (req, res) => {
   }
 };
 
-const createMachine = async (req, res) => {
+// const createMachine = async (req, res) => {
+//   try {
+//     const newMachine = new Machine(req.body);
+//     await newMachine.save();
+//     res.status(201).json(newMachine);
+//   } catch (error) {
+//     res.status(400).json({ error: "Không thể tạo thiết bị" });
+//   }
+// };
+const createMachine = catchAsync(async (req, res) => {
   try {
     const newMachine = new Machine(req.body);
     await newMachine.save();
     res.status(201).json(newMachine);
   } catch (error) {
-    res.status(400).json({ error: "Không thể tạo thiết bị" });
+    if (error.code === 11000) {
+      const err = new AppError("Machine ID đã tồn tại", 400);
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    }
+    res.status(500).json({ status: "error", message: "Lỗi không xác định" });
   }
-};
+});
 
 const updateMachine = async (req, res) => {
   try {
