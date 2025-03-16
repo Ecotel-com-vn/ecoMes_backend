@@ -14,7 +14,8 @@ const getMachines = catchAsync(async (req, res, next) => {
 
 // Tạo mới Machine
 const createMachine = catchAsync(async (req, res, next) => {
-  const { name, image, type, process_id, group_machine } = req.body;
+  const { name, type, process_id, group_machine } = req.body;
+  const image = req.file ? req.file.buffer : null;
 
   const processExists = await Process.findById(process_id);
   if (!processExists) {
@@ -30,6 +31,7 @@ const createMachine = catchAsync(async (req, res, next) => {
   await newMachine.save();
   res.status(201).json(newMachine);
 });
+
 
 // Cập nhật Machine
 const updateMachine = catchAsync(async (req, res, next) => {
