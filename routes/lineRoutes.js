@@ -39,7 +39,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/lines:
+ * /lines:
  *   get:
  *     summary: Lấy danh sách các line
  *     tags: [Line]
@@ -57,7 +57,7 @@ router.get("/", getLines);
 
 /**
  * @swagger
- * /api/lines:
+ * /lines:
  *   post:
  *     summary: Tạo một line mới
  *     tags: [Line]
@@ -81,7 +81,7 @@ router.post("/", createLine);
 
 /**
  * @swagger
- * /api/lines/{id}:
+ * /lines/{id}:
  *   put:
  *     summary: Cập nhật line theo ID
  *     tags: [Line]
@@ -114,7 +114,7 @@ router.put("/:id", updateLine);
 
 /**
  * @swagger
- * /api/lines/{id}:
+ * /lines/{id}:
  *   delete:
  *     summary: Xóa line theo ID
  *     tags: [Line]

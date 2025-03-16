@@ -1,72 +1,74 @@
 const Machine = require("../models/machine");
+const Process = require("../models/process");
+const GroupMachine = require("../models/groupMachine");
 const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync");
 
-const getMachines = async (req, res) => {
-  try {
-    const machines = await Machine.find();
-    res.json(machines);
-  } catch (error) {
-    res.status(500).json({ error: "Lỗi server" });
-  }
-};
-
-const createMachine = catchAsync(async (req, res, next) => {
-  try {
-    const { machine_id, name, type, process_id, group_machine } = req.body;
-    const existingMachine = await Machine.findOne({ machine_id });
-
-    if (existingMachine) {
-      return next(new AppError("Machine ID đã tồn tại", 400));
-    }
-
-    const image = req.file ? req.file.buffer : undefined;
-    const newMachine = new Machine({
-      machine_id,
-      name,
-      type,
-      process_id,
-      group_machine,
-      image,
-    });
-
-    await newMachine.save();
-    res.status(201).json(newMachine);
-  } catch (error) {
-    if (error.name === "ValidationError") {
-      const missingFields = Object.keys(error.errors).join(", ");
-      return next(new AppError(`Thiếu trường: ${missingFields}`, 400));
-    }
-    next(error);
-  }
+// Lấy danh sách Machine kèm thông tin Process và GroupMachine
+const getMachines = catchAsync(async (req, res, next) => {
+  const machines = await Machine.find()
+    .populate("process_id", "name description")
+    .populate("group_machine", "name");
+  res.json(machines);
 });
 
-const updateMachine = async (req, res) => {
-  try {
-    const updatedMachine = await Machine.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(updatedMachine);
-  } catch (error) {
-    res.status(400).json({ error: "Không thể cập nhật thiết bị" });
-  }
-};
+// Tạo mới Machine
+const createMachine = catchAsync(async (req, res, next) => {
+  const { name, image, type, process_id, group_machine } = req.body;
 
-const deleteMachine = async (req, res, next) => {
-  try {
-    const machine = await Machine.findById(req.params.id);
-    if (!machine) {
-      return next(new AppError("Không tìm thấy thiết bị", 404));
+  const processExists = await Process.findById(process_id);
+  if (!processExists) {
+    return next(new AppError("Process ID không tồn tại", 400));
+  }
+
+  const groupExists = await GroupMachine.findById(group_machine);
+  if (!groupExists) {
+    return next(new AppError("Group Machine ID không tồn tại", 400));
+  }
+
+  const newMachine = new Machine({ name, image, type, process_id, group_machine });
+  await newMachine.save();
+  res.status(201).json(newMachine);
+});
+
+// Cập nhật Machine
+const updateMachine = catchAsync(async (req, res, next) => {
+  const { process_id, group_machine } = req.body;
+
+  if (process_id) {
+    const processExists = await Process.findById(process_id);
+    if (!processExists) {
+      return next(new AppError("Process ID không tồn tại", 400));
     }
-
-    await machine.deleteOne();
-    res.json({ message: "Đã xóa thiết bị" });
-  } catch (error) {
-    next(new AppError("Không thể xóa thiết bị", 400));
   }
-};
 
+  if (group_machine) {
+    const groupExists = await GroupMachine.findById(group_machine);
+    if (!groupExists) {
+      return next(new AppError("Group Machine ID không tồn tại", 400));
+    }
+  }
+
+  const updatedMachine = await Machine.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+
+  if (!updatedMachine) {
+    return next(new AppError("Không tìm thấy machine", 404));
+  }
+
+  res.json(updatedMachine);
+});
+
+// Xóa Machine
+const deleteMachine = catchAsync(async (req, res, next) => {
+  const machine = await Machine.findById(req.params.id);
+  if (!machine) {
+    return next(new AppError("Không tìm thấy machine", 404));
+  }
+
+  await machine.deleteOne();
+  res.json({ message: "Đã xóa machine" });
+});
 
 module.exports = { getMachines, createMachine, updateMachine, deleteMachine };

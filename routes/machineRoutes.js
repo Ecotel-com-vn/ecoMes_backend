@@ -38,43 +38,36 @@ router.get("/", getMachines);
  *     tags: [Machines]
  *     consumes:
  *       - multipart/form-data
- *     parameters:
- *       - in: formData
- *         name: image
- *         type: file
- *         description: Ảnh của thiết bị
- *       - in: body
- *         name: body
- *         description: Dữ liệu thiết bị
- *         required: true
- *         schema:
- *           type: object
- *           required:
- *             - machine_id
- *             - name
- *             - process_id
- *             - group_machine
- *           properties:
- *             machine_id:
- *               type: string
- *               example: "M001"
- *             name:
- *               type: string
- *               example: "Máy CNC"
- *             type:
- *               type: string
- *               example: "Cắt kim loại"
- *             process_id:
- *               type: string
- *               example: "P001"
- *             group_machine:
- *               type: string
- *               example: "Nhóm A"
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - process_id
+ *               - group_machine
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Máy CNC"
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               type:
+ *                 type: string
+ *                 example: "Cắt kim loại"
+ *               process_id:
+ *                 type: string
+ *                 example: "65fabc1234567890abcdef12"
+ *               group_machine:
+ *                 type: string
+ *                 example: "65fabc9876543210abcdef34"
  *     responses:
  *       201:
  *         description: Thiết bị được tạo thành công
  *       400:
- *         description: Lỗi nhập dữ liệu hoặc ID đã tồn tại
+ *         description: Lỗi nhập dữ liệu hoặc ID không hợp lệ
  */
 router.post("/", upload.single("image"), createMachine);
 
@@ -91,20 +84,21 @@ router.post("/", upload.single("image"), createMachine);
  *         schema:
  *           type: string
  *         description: ID của thiết bị cần cập nhật
- *       - in: body
- *         name: body
- *         description: Dữ liệu cần cập nhật
- *         schema:
- *           type: object
- *           properties:
- *             name:
- *               type: string
- *             type:
- *               type: string
- *             process_id:
- *               type: string
- *             group_machine:
- *               type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               process_id:
+ *                 type: string
+ *               group_machine:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Cập nhật thành công
@@ -137,4 +131,3 @@ router.put("/:id", updateMachine);
 router.delete("/:id", deleteMachine);
 
 module.exports = router;
-

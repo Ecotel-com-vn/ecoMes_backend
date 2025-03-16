@@ -6,6 +6,8 @@ const machineRoutes = require("./routes/machineRoutes");
 const userRoutes = require("./routes/userRoutes");
 const areaRoutes = require("./routes/areaRoutes");
 const lineRoutes = require("./routes/lineRoutes");
+const processRoutes = require("./routes/processRoutes");
+const groupMachineRoutes = require("./routes/groupmachineRoutes");
 
 const WebSocket = require("ws");
 const mqttClient = require("./client/mqttClient");
@@ -49,6 +51,8 @@ mqttClient.on("message", (topic, message) => {
 app.use("/api/v1/machines", machineRoutes);
 app.use("/api/v1/areas", areaRoutes);
 app.use("/api/v1/lines", lineRoutes);
+app.use("/api/v1/process", processRoutes);
+app.use("/api/v1/groupmachine", groupMachineRoutes);
 app.use("/api/v1/users", userRoutes);
 
 // Đăng ký Swagger trước middleware lỗi
