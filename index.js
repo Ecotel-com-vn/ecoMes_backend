@@ -8,6 +8,11 @@ const areaRoutes = require("./routes/areaRoutes");
 const lineRoutes = require("./routes/lineRoutes");
 const processRoutes = require("./routes/processRoutes");
 const groupMachineRoutes = require("./routes/groupmachineRoutes");
+const workingshipRoutes = require("./routes/workingshipRoutes");
+const productRoutes = require("./routes/productRoutes");
+const downtimeReasonRoutes = require("./routes/downtimeRoutes");
+const groupStaffRoutes = require("./routes/groupStaffRoutes");
+const staffRoutes = require("./routes/staffRoutes");
 
 const WebSocket = require("ws");
 const mqttClient = require("./client/mqttClient");
@@ -15,7 +20,8 @@ const mqttClient = require("./client/mqttClient");
 const catchAsync = require("./utils/catchAsync");
 const AppError = require("./utils/AppError");
 const globalErrorHandler = require("./controller/errorController");
-const swaggerDocs = require("./utils/swagger"); // Import Swagger
+const swaggerDocs = require("./utils/swagger");
+
 
 const app = express();
 app.use(express.json());
@@ -54,6 +60,11 @@ app.use("/api/v1/lines", lineRoutes);
 app.use("/api/v1/process", processRoutes);
 app.use("/api/v1/groupmachine", groupMachineRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/workingship", workingshipRoutes);
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/downtime", downtimeReasonRoutes);
+app.use("/api/v1/groupstaff", groupStaffRoutes);
+app.use("/api/v1/staff", staffRoutes);
 
 // Đăng ký Swagger trước middleware lỗi
 swaggerDocs(app);
