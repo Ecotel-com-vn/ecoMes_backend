@@ -6,7 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "ws": "nodemon ws.js"
+    "check": "nodemon test.js",
+    "ws": "nodemon ws.js",
+    "mqtt":"nodemon mqtt.js"
   },
   "author": "",
   "license": "ISC",

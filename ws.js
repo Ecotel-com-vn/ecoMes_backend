@@ -1,55 +1,61 @@
 const WebSocket = require("ws");
 const mqtt = require("mqtt");
 
-// Cấu hình MQTT
 const MQTT_BROKER_URL = "mqtt://103.1.238.175:1883";
 const MQTT_USER = "test";
 const MQTT_PASS = "testadmin";
-const MQTT_TOPIC = "factory/machine/data"; // Thay đổi topic phù hợp
 
-// Kết nối MQTT
 const mqttClient = mqtt.connect(MQTT_BROKER_URL, {
   username: MQTT_USER,
   password: MQTT_PASS,
 });
 
-// Tạo WebSocket Server trên cổng 4000
 const wss = new WebSocket.Server({ port: 4000 });
 
-wss.on("connection", (ws) => {
-  console.log("WebSocket client connected");
-
-  ws.on("close", () => {
-    console.log("WebSocket client disconnected");
-  });
-});
-
-// Khi MQTT kết nối thành công
 mqttClient.on("connect", () => {
   console.log("Connected to MQTT broker");
-  mqttClient.subscribe(MQTT_TOPIC, (err) => {
+});
+
+wss.on("connection", (ws, req) => {
+  const path = req.url || "/";
+  const id = path.split("/")[1] || "M01"; // fallback nếu không có id
+  const topic = `factory/machine/${id}/#`;
+
+  console.log(`WebSocket client connected - Machine ID: ${id}`);
+
+  // Subscribe riêng cho từng client nếu chưa subscribe trước
+  mqttClient.subscribe(topic, (err) => {
     if (err) {
-      console.error("Failed to subscribe:", err);
+      console.error(`Failed to subscribe to ${topic}:`, err);
     } else {
-      console.log(`Subscribed to topic: ${MQTT_TOPIC}`);
+      console.log(`Subscribed to topic: ${topic}`);
     }
   });
+
+  ws.on("close", () => {
+    console.log(`WebSocket client for ${id} disconnected`);
+    // Optional: Bạn có thể unsubscribe khi không cần theo dõi nữa
+    // mqttClient.unsubscribe(topic);
+  });
 });
-// Khi nhận dữ liệu từ MQTT
+
 mqttClient.on("message", (topic, message) => {
   try {
     const data = JSON.parse(message.toString());
-    console.log("Received MQTT Data:", data);
+    console.dir(data, { depth: null, colors: true });
 
-    // Gửi dữ liệu đến tất cả WebSocket clients
+    // Gửi cho tất cả client nếu cùng topic hoặc broadcast toàn bộ
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(data));
+        client.send(JSON.stringify({ topic, data }));
       }
     });
   } catch (error) {
     console.error("Error parsing MQTT message:", error);
+    console.log("Raw message:", message.toString());
   }
 });
 
 console.log("WebSocket server running on port 4000");
+
+
